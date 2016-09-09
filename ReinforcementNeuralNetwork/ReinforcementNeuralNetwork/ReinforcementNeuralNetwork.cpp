@@ -10,15 +10,15 @@
 #include <ios>
 #include <iomanip>
 #include <string>
+#include "NetMaker.cpp"
+using namespace std;
 
 int main()
 {
-	std::cout << "Hello World! ";
-	std::cout << "I'm a C++ program";
-
+	NetMaker *m = new NetMaker(1,2,3,4);
 	//TRAIN
 
-	const unsigned int num_input = 2;
+	/*const unsigned int num_input = 2;
 	const unsigned int num_output = 1;
 	const unsigned int num_layers = 3;
 	const unsigned int num_neurons_hidden = 3;
@@ -71,10 +71,8 @@ int main()
 
 	printf("Cleaning up.\n");
 	fann_destroy_train(data);
-	fann_destroy(ann);
+	fann_destroy(ann);*/
 	
-
-	while (true) {}
 	return 0;
 
 	
