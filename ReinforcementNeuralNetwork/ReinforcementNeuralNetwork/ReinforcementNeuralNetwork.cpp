@@ -4,18 +4,39 @@
 #include "stdafx.h"
 #include <iostream>
 #include <stdio.h>
-#include "floatfann.h"
-#include "fann_cpp.h"
-
 #include <ios>
 #include <iomanip>
 #include <string>
+
 #include "NetMaker.cpp"
+#include "NetLoader.cpp"
 using namespace std;
 
 int main()
 {
-	NetMaker *m = new NetMaker(1,2,3,4);
+	
+	bool createNet = false;
+	bool trainNet = false;
+
+	int size = 5;
+	unsigned int layerDetails[] = { 3,4,4,4,1 };
+	const char *netname = "xor_triple.net";
+	const char *dataname = "xor.data";
+
+	NetMaker *maker;
+	NetLoader *loader;
+	if (createNet == true) {
+		maker = new NetMaker(layerDetails, size, netname);
+		free(maker);
+	}
+	else if(trainNet == true){
+		loader = new NetLoader(netname,dataname,trainNet);
+
+	}
+	else {
+		loader = new NetLoader(netname, dataname, trainNet);
+	}
+
 	//TRAIN
 
 	/*const unsigned int num_input = 2;

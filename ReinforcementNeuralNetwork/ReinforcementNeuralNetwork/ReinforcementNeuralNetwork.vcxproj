@@ -152,6 +152,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NetLoader.cpp" />
     <ClCompile Include="NetMaker.cpp" />
     <ClCompile Include="ReinforcementNeuralNetwork.cpp" />
     <ClCompile Include="stdafx.cpp">
