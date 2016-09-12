@@ -2,15 +2,17 @@
 //
 
 #include "stdafx.h"
-#include <iostream>
-#include <stdio.h>
-#include <ios>
-#include <iomanip>
-#include <string>
+#include<iostream>    //cout
+#include<stdio.h> //printf
+#include<string>  //string
+#include<string.h>    //strlen
+
 
 #include "NetMaker.cpp"
 #include "NetLoader.cpp"
+#include "EasyClientSocket.cpp"
 using namespace std;
+
 
 int main()
 {
@@ -25,6 +27,7 @@ int main()
 
 	NetMaker *maker;
 	NetLoader *loader;
+	EasyClientSocket *client;
 	if (createNet == true) {
 		maker = new NetMaker(layerDetails, size, netname);
 		free(maker);
@@ -36,6 +39,8 @@ int main()
 	else {
 		loader = new NetLoader(netname, dataname, trainNet);
 	}
+
+	 client = new EasyClientSocket(12345, "127.0.0.1");
 
 	//TRAIN
 
@@ -93,7 +98,7 @@ int main()
 	printf("Cleaning up.\n");
 	fann_destroy_train(data);
 	fann_destroy(ann);*/
-	
+
 	return 0;
 
 	
