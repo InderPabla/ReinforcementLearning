@@ -10,14 +10,15 @@ class NetLoader {
 
 	private:
 		fann *ann;
+		const float desired_error = (const float) 0.000001;
+		const unsigned int max_epochs = 500000;
+		const unsigned int epochs_between_reports = 1000;
 
 	public:
 		NetLoader(const char *netname, const char *dataname, bool trainMode) {
 			ann = fann_create_from_file(netname);
 			
-			const float desired_error = (const float) 0.000001;
-			const unsigned int max_epochs = 500000;
-			const unsigned int epochs_between_reports = 1000;
+			
 
 			if (trainMode == true) {
 				fann_train_on_file(ann, dataname, max_epochs, epochs_between_reports, desired_error);
@@ -47,6 +48,10 @@ class NetLoader {
 			}
 
 
+		}
+
+		void fit(fann_train_data *data) {
+			fann_train_on_data(ann, data, max_epochs, epochs_between_reports, desired_error);
 		}
 
 		
