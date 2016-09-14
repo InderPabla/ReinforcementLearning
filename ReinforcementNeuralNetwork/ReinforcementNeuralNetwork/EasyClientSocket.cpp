@@ -11,12 +11,15 @@ using namespace std;
 
 class EasyClientSocket {
 
+	private: 
+		char *sendbuf = "this is a test";
+		WSADATA wsa;
+		SOCKET s;
+		struct sockaddr_in server;
+
 	public:
 		EasyClientSocket(int port, const char *address) {
-			char *sendbuf = "this is a test";
-			WSADATA wsa;
-			SOCKET s;
-			struct sockaddr_in server;
+			
 
 			printf("\nInitialising Winsock...");
 			if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
@@ -44,8 +47,9 @@ class EasyClientSocket {
 			{
 				puts("connect error");
 			}
+			puts("Connected");
 
-			string outMessage = "tesqererq rrqer";
+			/*string outMessage = "tesqererq rrqer";
 			//int iResult = send(s, sendbuf, (int)strlen(sendbuf), 0);
 			int iResult = send(s, outMessage.c_str(), outMessage.size(), 0);
 			if (iResult == SOCKET_ERROR) {
@@ -56,6 +60,43 @@ class EasyClientSocket {
 
 			printf("Bytes Sent: %ld\n", iResult);
 			closesocket(s);
-			puts("Connected");
+			*/
+
+			float testArray[5] = {0.24f,0.979f,0.1234f,-1.298f,-0.6698f};
+			int testArrayLen = 5;
+
+			for (int i = 0; i < testArrayLen; i++) {
+				testArray[i] = ReverseFloat(testArray[i]);
+			}
+
+			
+			sendArray(testArray, testArrayLen);
+
+			closesocket(s);
+		}
+
+		void sendArray(float array[], int arrayLen) {
+			int iResult  = send(s, (char*)array, sizeof(array[0]) * arrayLen,0);
+
+			if (iResult == SOCKET_ERROR) {
+				printf("send failed with error: %d\n", WSAGetLastError());
+				WSACleanup();
+			}
+			printf("Bytes Sent: %ld\n", iResult);
+		}
+
+		float ReverseFloat(const float inFloat)
+		{
+			float retVal;
+			char *floatToConvert = (char*)& inFloat;
+			char *returnFloat = (char*)& retVal;
+
+			// swap the bytes into a temporary buffer
+			returnFloat[0] = floatToConvert[3];
+			returnFloat[1] = floatToConvert[2];
+			returnFloat[2] = floatToConvert[1];
+			returnFloat[3] = floatToConvert[0];
+
+			return retVal;
 		}
 };
