@@ -17,66 +17,84 @@ public class ReinforcementAgent : MonoBehaviour {
     private NetworkStream stream;
 
     // Use this for initialization
-    void Start () {
+    private void Start () {
 
         thread = new Thread(Worker); //Thread object to run Woker method
         thread.IsBackground = true; //not a dameon thread, must run in foreground
         thread.Start(); // start thread
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    private void Update () {
 	
 	}
 
     //Worker thread which will deal with connected to C++ FANN
-    public void Worker()
+    private void Worker()
     {
         //Get local IP address and start listening to TCP socket on port 12345
         address = Dns.GetHostEntry("localhost").AddressList[0];
         serverSocket = new TcpListener(address, 12345);
         serverSocket.Start();
+       
+        acceptSocket = serverSocket.AcceptTcpClient();  //Accept data stream from TCP server socket
+        stream = acceptSocket.GetStream(); //Client connected to this socket
 
-        //Accept data stream from TCP server socket
-        acceptSocket = serverSocket.AcceptTcpClient();
-        stream = acceptSocket.GetStream();
 
-        //Client connected to this socket
 
-        int arrayCount = 5;
+        float[] rcvArray = ReceiveFloatArray(5);
+
+        Debug.Log(rcvArray[0] + " ONEd\n" +
+            rcvArray[1] + " TWOf\n" +
+            rcvArray[2] + " THREE\n" +
+            rcvArray[3] + " FOUR\n" +
+            rcvArray[4] + " FIVE");
+
+        float[] sendArray = {1.24f,-0.425f,67.245f,-101.45f,2.7778f};
+        SendArray(sendArray);
+    }
+
+    // Recieve float array 
+    private float[] ReceiveFloatArray(int count) {
         int sizeOfFloat = 4;
-        int byteCount = sizeOfFloat * arrayCount;
+        int byteCount = sizeOfFloat * count;
         byte[] bytes = new byte[byteCount];
         stream.Read(bytes, 0, bytes.Length);
-        float[] bytesToFloat = new float[arrayCount];
+        float[] bytesToFloat = new float[count];
 
-        for (int i = 0; i < byteCount; i += sizeOfFloat)
-        {
+        for (int i = 0; i < byteCount; i += sizeOfFloat) {
 
             byte[] tempBytes = new byte[sizeOfFloat];
 
-            tempBytes[0] = bytes[i + 3];
-            tempBytes[1] = bytes[i + 2];
-            tempBytes[2] = bytes[i + 1];
-            tempBytes[3] = bytes[i];
+            // Flip from little endian to big endian
+            tempBytes[3] = bytes[i + 3];
+            tempBytes[2] = bytes[i + 2];
+            tempBytes[1] = bytes[i + 1];
+            tempBytes[0] = bytes[i];
 
-            float value = BitConverter.ToSingle(tempBytes, 0);
-            int index = i / sizeOfFloat;
+            float value = BitConverter.ToSingle(tempBytes, 0); //convert from float to 
+
+            int index = i / sizeOfFloat; 
             bytesToFloat[index] = value;
         }
 
-        Debug.Log(bytesToFloat[0] + " ONET\n" +
-            bytesToFloat[1] + " TWO\n" +
-            bytesToFloat[2] + " THREE\n" +
-            bytesToFloat[3] + " FOUR\n" +
-            bytesToFloat[4] + " FIVE");
-
+        return bytesToFloat;
     }
 
+    // Send float array 
+    private void SendArray(float[] array) {
+        int count = array.Length;
+        int sizeOfFloat = 4;
+        int byteCount = array.Length * sizeOfFloat;
+        
+        byte[] convertedData = new byte[byteCount];
+        Buffer.BlockCopy(array, 0, convertedData, 0, convertedData.Length);
 
+        stream.Write(convertedData, 0, convertedData.Length);
+    }
 
     //If application quits makes sure all sockets and streams are closed
-    void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         // If thread is running
         if (thread.IsAlive)
@@ -84,9 +102,7 @@ public class ReinforcementAgent : MonoBehaviour {
             // Close sockets and streams
             try
             {
-                serverSocket.Stop();
-                stream.Close();
-                acceptSocket.Close();
+                CloseConnection();
             }
             catch (SocketException error)
             {
@@ -104,6 +120,13 @@ public class ReinforcementAgent : MonoBehaviour {
                 Debug.Log(error);
             }
         }
+    }
+
+    // Close all connection sockets and streams
+    private void CloseConnection() {
+        serverSocket.Stop();
+        stream.Close();
+        acceptSocket.Close();
     }
 
     // Forced security close of this thread
