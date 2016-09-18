@@ -20,9 +20,8 @@ class EasyClientSocket {
 		EasyClientSocket(int port, const char *address) {
 
 			printf("\nInitialising Winsock...");
-			if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-			{
-				printf("Failed. Error Code : %d", WSAGetLastError());
+			if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+				printf("Failed. Erfror Code : %d", WSAGetLastError());
 			}
 
 			printf("Initialised.\n");
@@ -41,15 +40,13 @@ class EasyClientSocket {
 			server.sin_port = htons(port);
 
 			//Connect to remote server
-			if (connect(s, (struct sockaddr *)&server, sizeof(server)) < 0)
-			{
+			if (connect(s, (struct sockaddr *)&server, sizeof(server)) < 0) {
 				puts("connect error");
 			}
 			puts("Connected");
-
-			
 		}
 
+		// Test sending an array with 5 float values 
 		void TestArraySend() {
 			float testArray[5] = { 0.24f,0.979f,0.1234f,-1.298f,-0.6698f };
 			int testArrayLen = 5;
@@ -57,6 +54,7 @@ class EasyClientSocket {
 			SendArray(testArray, testArrayLen);
 		}
 
+		// Test receiveing an array with 5 float values
 		void TestArrayReceive() {
 			const int count = 5;
 			float *rcvArray = ReceiveFloatArray(count);
@@ -72,7 +70,6 @@ class EasyClientSocket {
 			closesocket(s);
 		}
 
-	private: 
 		// send float array over TCP
 		void SendArray(float array[], int arrayLen) {
 			int iResult  = send(s, (char*)array, sizeof(array[0]) * arrayLen,0); //send float array after conversion to bytes
@@ -116,6 +113,10 @@ class EasyClientSocket {
 			}
 			return pos;
 				
+		}
+
+		void OpenConnection() {
+			
 		}
 
 			

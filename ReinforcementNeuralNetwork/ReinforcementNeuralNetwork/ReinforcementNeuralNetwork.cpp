@@ -20,6 +20,9 @@ int main()
 	bool createNet = false;
 	bool trainNet = false;
 
+	const char *address = "127.0.0.1";
+	int port = 12345;
+
 	int size = 5;
 	unsigned int layerDetails[] = { 3,4,4,4,1 };
 	const char *netname = "xor_triple.net";
@@ -28,9 +31,13 @@ int main()
 	NetMaker *maker;
 	NetLoader *loader;
 	EasyClientSocket *client;
+
+	int stateSize = 3;
+	int actionSize = 2;
+
 	if (createNet == true) {
 		maker = new NetMaker(layerDetails, size, netname);
-		free(maker);
+		delete maker;
 	}
 	else if(trainNet == true){
 		loader = new NetLoader(netname,dataname,trainNet);
@@ -40,8 +47,22 @@ int main()
 		loader = new NetLoader(netname, dataname, trainNet);
 	}
 
-	 client = new EasyClientSocket(12345, "127.0.0.1");
-	 
+	 client = new EasyClientSocket(port, address); 
+	 //client->OpenConnection(); //open connection
+
+	 //--------Connection conversation start--------
+	 float *rcvStateArray = client->ReceiveFloatArray(stateSize);
+	 printf("%f _ ", rcvStateArray[0]);
+	 printf("%f _ ", rcvStateArray[1]);
+	 printf("%f _ ",rcvStateArray[2]);
+	 delete[] rcvStateArray;
+
+	 //--------Connection conversation end--------
+
+	 client->CloseConnection(); //close connection
+
+	 //free heap
+	 delete client;
 
 	//TRAIN
 
