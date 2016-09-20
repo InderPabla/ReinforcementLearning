@@ -15,11 +15,13 @@ class EasyClientSocket {
 		WSADATA wsa; 
 		SOCKET s;
 		struct sockaddr_in server;
+		bool debug_mode = false;
 
 	public:
-		EasyClientSocket(int port, const char *address) {
+		EasyClientSocket(int port, const char *address, bool debug_mode) {
 
-			printf("\nInitialising Winsock...");
+			this->debug_mode = debug_mode;
+
 			if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
 				printf("Failed. Erfror Code : %d", WSAGetLastError());
 			}
@@ -27,8 +29,7 @@ class EasyClientSocket {
 			printf("Initialised.\n");
 
 			//Create a socket
-			if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
-			{
+			if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
 				printf("Could not create socket : %d", WSAGetLastError());
 			}
 
@@ -38,12 +39,6 @@ class EasyClientSocket {
 			server.sin_addr.s_addr = inet_addr(address);
 			server.sin_family = AF_INET;
 			server.sin_port = htons(port);
-
-			//Connect to remote server
-			if (connect(s, (struct sockaddr *)&server, sizeof(server)) < 0) {
-				puts("connect error");
-			}
-			puts("Connected");
 		}
 
 		// Test sending an array with 5 float values 
@@ -58,6 +53,7 @@ class EasyClientSocket {
 		void TestArrayReceive() {
 			const int count = 5;
 			float *rcvArray = ReceiveFloatArray(count);
+
 
 			for (int i = 0; i < count; i++) {
 				printf("%f ", rcvArray[i]);
@@ -78,8 +74,10 @@ class EasyClientSocket {
 				printf("send failed with error: %d\n", WSAGetLastError());
 				WSACleanup(); //clean up win sock
 			}
-			else
-				printf("Bytes Sent: %ld\n", iResult); // print number of bytes sent
+			else {
+				if (debug_mode)
+					printf("Bytes Sent: %ld\n", iResult); // print number of bytes sent
+			}
 		}
 
 		// send string over TCP
@@ -90,8 +88,10 @@ class EasyClientSocket {
 				printf("send failed with error: %d\n", WSAGetLastError());
 				WSACleanup(); //clean up win sock
 			}
-			else
-				printf("Bytes Sent: %ld\n", iResult); // print number of bytes sent
+			else {
+				if (debug_mode)
+					printf("Bytes Sent: %ld\n", iResult); // print number of bytes sent
+			}
 		}
 			
 		float* ReceiveFloatArray(int count) {
@@ -104,8 +104,10 @@ class EasyClientSocket {
 				printf("send failed with error: %d\n", WSAGetLastError());
 				WSACleanup(); //clean up win sock
 			}
-			else
-				printf("Bytes Recv: %ld\n", iResult); // print number of bytes sent
+			else {
+				if (debug_mode)
+					printf("Bytes Recv: %ld\n", iResult); // print number of bytes sent
+			}
 
 			for (int i = 0; i < count * 4; i += 4) {
 				int index = i / 4;
@@ -116,7 +118,12 @@ class EasyClientSocket {
 		}
 
 		void OpenConnection() {
-			
+			//Connect to remote server
+			if (connect(s, (struct sockaddr *)&server, sizeof(server)) < 0) {
+				printf("connect error");
+			}
+
+			printf("Connected");
 		}
 
 			

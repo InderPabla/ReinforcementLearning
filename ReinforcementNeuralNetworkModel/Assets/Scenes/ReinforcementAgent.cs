@@ -38,6 +38,7 @@ public class ReinforcementAgent : MonoBehaviour
     private bool quit = false;
 
     private const int WORK_APPLY = 0;
+    private const int WORK_RESET = 2;
     private const int WORK_GET = 1;
     private const int WORK_NULL = -1;
 
@@ -45,6 +46,8 @@ public class ReinforcementAgent : MonoBehaviour
     private const int ACTION_1 = 0;
     private const int ACTION_2 = 1;
 
+    private float epslion = -1f;
+    private float epslionDecay = 0f;//0.00001f;
     // Public values which can be set from the Unity inspector 
     public bool connect = false;
     public Rigidbody2D[] rBodies = new Rigidbody2D[2]; // Size set by user
@@ -58,8 +61,6 @@ public class ReinforcementAgent : MonoBehaviour
 
         actions = new float[actionSize];
         states = new float[stateSize];
-
-        //StartCoroutine(CheckOtherThreadsEveryFrame());
 
         if (connect == true)
         {
@@ -83,6 +84,11 @@ public class ReinforcementAgent : MonoBehaviour
                 GetState();
                 workType = WORK_NULL;
             }
+            else if (workType == WORK_RESET)
+            {
+                Reset();
+                workType = WORK_NULL;
+            }
         }
         else
         {
@@ -104,9 +110,21 @@ public class ReinforcementAgent : MonoBehaviour
 
     private void GetState()
     {
-        states[0] = rBodies[1].velocity.x;
-        states[1] = rBodies[0].angularVelocity;
+        states[0] = rBodies[1].velocity.x; 
+        states[1] = rBodies[0].angularVelocity; //pole angualr 
         states[2] = rBodies[0].transform.eulerAngles.z * Mathf.Deg2Rad;
+    }
+
+    public void Reset()
+    {
+        rBodies[0].velocity = Vector2.zero;
+        rBodies[0].angularVelocity = 0f;
+
+        rBodies[1].velocity = Vector2.zero;
+        rBodies[1].angularVelocity = 0f;
+
+        rBodies[1].transform.position = new Vector3(0,0,0);
+        rBodies[0].transform.eulerAngles = new Vector3(0,0,0);
     }
 
     //Worker thread which will deal with connected to C++ FANN
@@ -121,49 +139,125 @@ public class ReinforcementAgent : MonoBehaviour
         acceptSocket = serverSocket.AcceptTcpClient();  // Accept data stream from TCP server socket
         stream = acceptSocket.GetStream(); // Client connected to this socket
         Debug.Log("Client Has Connected.");
+        System.Random randomGenerator = new System.Random();
 
         while (quit == false)
         {
             try
             {
                 //Might need to add semaphores! There will be a context swtich from here to update!
-                
+                bool reset = false;
                 //1. Make prediction on current state 
                 Work(WORK_GET, ACTION_NULL); //get current state 
                 SendArray(states); //send state to netowrk
+                //Debug.Log("Sending 1");
                 float[] qval = ReceiveFloatArray(actionSize); //receive prediction
+                //Debug.Log("Recieving 1");
                 //-----------------  
 
+
                 //2. Pick with epsilion greedy method
-                int someAction = -1;
+                //int someAction = randomGenerator.Next(0,actionSize); //randomly pick action
+                
+                int someAction = ACTION_1;
+                float chance = (float)randomGenerator.NextDouble();
+                if (chance < epslion)
+                {
+                    epslion -= epslionDecay;
+                    someAction = randomGenerator.Next(actionSize);
+                }
+                else
+                {
+                    float largestQValue = 0f;
+                    for (int i = 0; i < actionSize; i++)
+                    {
+                        if (qval[i] >= largestQValue)
+                        {
+                            largestQValue = qval[i];
+                            someAction = i;
+                        }
+                    }
+                    Debug.Log("MAX Q");
+                }
+                //Debug.Log("Choosing Action");
                 //----------------- 
 
+               
                 //3. Apply action and get state
                 Work(WORK_APPLY, someAction);
+                //Debug.Log("Applying work");
+
 
                 //4. Get reward for current state
-                float reward = -1f;
+                float failDegree = 45f;
+                float pole1AngleDegree = (states[2]*180f)/(float)Math.PI;
+                /*if (pole1AngleDegree >= 90f && pole1AngleDegree <= 270f)
+                    reward = -10f;
+                else if (pole1AngleDegree >= failDegree && pole1AngleDegree <= 90f)
+                    reward = -1f;
+                else if (pole1AngleDegree <= (360f - failDegree) && pole1AngleDegree >= 270f)
+                    reward = -1f;
+                else
+                    reward = 10f;*/
+
+                if (pole1AngleDegree >= 90f && pole1AngleDegree <= 270f)
+                    reward = -10f;
+                else if (pole1AngleDegree <= 90f)
+                {
+                    reward = (pole1AngleDegree/90f)*100f;
+                }
+                else if (pole1AngleDegree >= 270f)
+                {
+                    reward = ((90f-(360-pole1AngleDegree))/90f) * 100f;
+                }
+
+                //Debug.Log("Reward calc");
+
+
+                if (!((pole1AngleDegree <= failDegree && pole1AngleDegree >= 0) || (pole1AngleDegree <= 360 && pole1AngleDegree >= (360 - failDegree))))
+                {
+                    reset = true;
+                }
+
                 //----------------- 
+
 
                 //5. Make predcition on sate after action
                 Work(WORK_GET, ACTION_NULL); //get state after acction 
                 SendArray(states); //send state to netowrk
+                //Debug.Log("Sending 2");
                 float[] newQ = ReceiveFloatArray(actionSize); //receive new prediction
+                //Debug.Log("Recieving 2");
                 //-----------------  
 
+                //Debug.Log("Bakcprop error");
                 //6. Calculate backpropagation error 
+                float largestNewQValue = 0f;
+                for (int i = 0; i < actionSize; i++)
+                {
+                    if (newQ[i] >= largestNewQValue)
+                    {
+                        largestNewQValue = newQ[i];
+                    }
+                }
 
+                float update = reward + largestNewQValue * 0.9f;
+                float[] expectedAction = new float[actionSize];
+                expectedAction[someAction] = update;
+                SendArray(expectedAction);
+
+
+                if (reset == true)
+                {
+                    Work(WORK_RESET, ACTION_NULL);
+                }
                 //-----------------  
-
-
-
-
-
 
             }
-            catch (IOException err)
+            catch (Exception err)
             {
                 Debug.LogError("NetworkStream Write Error");
+                Debug.LogError(err);
                 quit = true;
             }
         }
@@ -175,7 +269,7 @@ public class ReinforcementAgent : MonoBehaviour
     {
         this.actionType = actionType;
         this.workType = workType;
-        while (workType != WORK_NULL) { }; // wait
+        while (this.workType != WORK_NULL) { }; // wait
     }
 
     // Recieve float array 
@@ -216,6 +310,11 @@ public class ReinforcementAgent : MonoBehaviour
         byte[] convertedData = new byte[byteCount];
         Buffer.BlockCopy(array, 0, convertedData, 0, convertedData.Length);
 
+        stream.Write(convertedData, 0, convertedData.Length);
+    }
+
+    private void SendInt(int integer) {
+        byte[] convertedData = BitConverter.GetBytes(integer);
         stream.Write(convertedData, 0, convertedData.Length);
     }
 

@@ -17,16 +17,17 @@ using namespace std;
 int main()
 {
 	
-	bool createNet = false;
-	bool trainNet = false;
+	bool create_net = false;
 
 	const char *address = "127.0.0.1";
 	int port = 12345;
-
-	int size = 5;
-	unsigned int layerDetails[] = { 3,4,4,4,1 };
-	const char *netname = "xor_triple.net";
-	const char *dataname = "xor.data";
+	bool debug_mode = true;
+	int epoch_save = 100;
+	int layer_size = 5;
+	float learning_rate = 0.1f;
+	unsigned int layer_details[] = { 3,64,64,64,2 };
+	const char *netname = "pole_balance.net";
+	/*const char *dataname = "xor.data";*/
 
 	NetMaker *maker;
 	NetLoader *loader;
@@ -35,91 +36,79 @@ int main()
 	int stateSize = 3;
 	int actionSize = 2;
 
-	if (createNet == true) {
-		maker = new NetMaker(layerDetails, size, netname);
+	if (create_net == true) {
+		maker = new NetMaker(layer_details, layer_size, netname);
 		delete maker;
 	}
-	else if(trainNet == true){
-		loader = new NetLoader(netname,dataname,trainNet);
-
-	}
 	else {
-		loader = new NetLoader(netname, dataname, trainNet);
+		//maker = new NetMaker(layer_details, layer_size, netname);
+		//delete maker;
+
+		loader = new NetLoader(netname, epoch_save, learning_rate);
+		client = new EasyClientSocket(port, address, debug_mode);
+		client->OpenConnection(); //open connection
+
+		//--------Connection conversation start--------
+		while (true) {
+			try {
+				//1. Get current state, make prediction and send action 
+				float *rcvStateArray = client->ReceiveFloatArray(stateSize);
+				fann_type *input = new fann_type[stateSize];
+				for (int i = 0; i < stateSize; i++) {
+					input[i] = rcvStateArray[i];
+				}
+				fann_type *prediction = loader->predict(input);
+				float *sendActionArray = new float[actionSize];
+				for (int i = 0; i < actionSize; i++) {
+					sendActionArray[i] = prediction[i];
+				}
+				client->SendArray(sendActionArray, actionSize);
+
+				//2. Get new state, make new prediction
+				float *rcvStateArray2 = client->ReceiveFloatArray(stateSize);
+				fann_type *input2 = new fann_type[stateSize];
+				for (int i = 0; i < stateSize; i++) {
+					input2[i] = rcvStateArray2[i];
+				}
+				fann_type *prediction2 = loader->predict(input2);
+				float *sendActionArray2 = new float[actionSize];
+				for (int i = 0; i < actionSize; i++) {
+					sendActionArray2[i] = prediction2[i];
+				}
+				client->SendArray(sendActionArray2, actionSize);
+
+				//3. Get target output and train with input 2
+				float *rcvActionArray = client->ReceiveFloatArray(actionSize);
+				fann_type *expectedOutput = new fann_type[actionSize];
+				for (int i = 0; i < actionSize; i++) {
+					expectedOutput[i] = rcvActionArray[i];
+				}
+				loader->fit(input2, expectedOutput);
+
+				delete[] rcvActionArray;
+				delete[] expectedOutput;
+				delete[] sendActionArray;
+				delete[] rcvStateArray;
+				delete[] input;
+				delete[] sendActionArray2;
+				delete[] rcvStateArray2;
+				delete[] input2;
+			}
+			catch (int e) {
+				printf("EXCEPTION %i",e);
+				break;
+			}
+		}
+
+		//--------Connection conversation end--------
+
+		client->CloseConnection(); //close connection
+
+		//free heap
+		delete client;
 	}
 
-	 client = new EasyClientSocket(port, address); 
-	 //client->OpenConnection(); //open connection
-
-	 //--------Connection conversation start--------
-	 float *rcvStateArray = client->ReceiveFloatArray(stateSize);
-	 printf("%f _ ", rcvStateArray[0]);
-	 printf("%f _ ", rcvStateArray[1]);
-	 printf("%f _ ",rcvStateArray[2]);
-	 delete[] rcvStateArray;
-
-	 //--------Connection conversation end--------
-
-	 client->CloseConnection(); //close connection
-
-	 //free heap
-	 delete client;
-
-	//TRAIN
-
-	/*const unsigned int num_input = 2;
-	const unsigned int num_output = 1;
-	const unsigned int num_layers = 3;
-	const unsigned int num_neurons_hidden = 3;
-	const float desired_error = (const float) 0.000001;
-	const unsigned int max_epochs = 500000;
-	const unsigned int epochs_between_reports = 1000;
-	unsigned int i;
-	int ret = 0;
-
-	fann_type *calc_out;
-	struct fann_train_data *data;
-	struct fann *ann = fann_create_standard(num_layers, num_input, num_neurons_hidden, num_output);
-
-	fann_set_activation_function_hidden(ann, FANN_SIGMOID_SYMMETRIC);
-	fann_set_activation_function_output(ann, FANN_SIGMOID_SYMMETRIC);
-
-	fann_train_on_file(ann, "xor.data", max_epochs, epochs_between_reports, desired_error);
-
-	fann_save(ann, "xor_float.net");
-
-	fann_destroy(ann);
-	
-	//TEST
-
-	printf("Creating network.\n");
-	ann = fann_create_from_file("xor_float.net");
-
-	if (!ann)
-	{
-		printf("Error creating ann --- ABORTING.\n");
-		return -1;
-	}
-
-	fann_print_connections(ann);
-	fann_print_parameters(ann);
-
-	printf("Testing network.\n");
-
-	data = fann_read_train_from_file("xor.data");
-
-	for (i = 0; i < fann_length_train_data(data); i++)
-	{
-		fann_reset_MSE(ann);
-		calc_out = fann_test(ann, data->input[i], data->output[i]);
-
-		printf("XOR test (%f, %f) -> %f, should be %f, difference=%f\n",
-			data->input[i][0], data->input[i][1], calc_out[0], data->output[i][0],
-			(float)fann_abs(calc_out[0] - data->output[i][0]));
-	}
-
-	printf("Cleaning up.\n");
-	fann_destroy_train(data);
-	fann_destroy(ann);*/
+	 
 
 	return 0;
 

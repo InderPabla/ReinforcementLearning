@@ -1,16 +1,9 @@
-﻿Build started 17/09/2016 7:26:24 PM.
-     1>Project "C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork.vcxproj" on node 2 (Rebuild target(s)).
+﻿Build started 19/09/2016 11:17:14 PM.
+     1>Project "C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I"C:\Users\Pabla\Desktop\FANN-2.2.0-Source\FANN-2.2.0-Source\src\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yc"stdafx.h" /Fp"Debug\ReinforcementNeuralNetwork.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt stdafx.cpp
-         stdafx.cpp
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I"C:\Users\Pabla\Desktop\FANN-2.2.0-Source\FANN-2.2.0-Source\src\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"stdafx.h" /Fp"Debug\ReinforcementNeuralNetwork.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt EasyClientSocket.cpp NetLoader.cpp NetMaker.cpp ReinforcementNeuralNetwork.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /I"C:\Users\Pabla\Desktop\FANN-2.2.0-Source\FANN-2.2.0-Source\src\include" /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yu"stdafx.h" /Fp"Debug\ReinforcementNeuralNetwork.pch" /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt ReinforcementNeuralNetwork.cpp
          ReinforcementNeuralNetwork.cpp
-     1>c:\users\pabla\desktop\imageanalysis\reinforcementlearning\reinforcementneuralnetwork\reinforcementneuralnetwork\netloader.cpp(35): warning C4018: '<': signed/unsigned mismatch
-         NetMaker.cpp
-         NetLoader.cpp
-     1>c:\users\pabla\desktop\imageanalysis\reinforcementlearning\reinforcementneuralnetwork\reinforcementneuralnetwork\netloader.cpp(35): warning C4018: '<': signed/unsigned mismatch
-         EasyClientSocket.cpp
-         Generating Code...
+     1>c:\users\pabla\desktop\imageanalysis\reinforcementlearning\reinforcementneuralnetwork\reinforcementneuralnetwork\netloader.cpp(38): warning C4018: '<': signed/unsigned mismatch
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\Debug\ReinforcementNeuralNetwork.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\Pabla\Desktop\FANN-2.2.0-Source\FANN-2.2.0-Source\bin" fannfloat.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\Debug\ReinforcementNeuralNetwork.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\Debug\ReinforcementNeuralNetwork.lib" /MACHINE:X86 Debug\EasyClientSocket.obj
          Debug\NetLoader.obj
@@ -18,8 +11,8 @@
          Debug\ReinforcementNeuralNetwork.obj
          Debug\stdafx.obj
          ReinforcementNeuralNetwork.vcxproj -> C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\Debug\ReinforcementNeuralNetwork.exe
-     1>Done Building Project "C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork.vcxproj" (Rebuild target(s)).
+     1>Done Building Project "C:\Users\Pabla\Desktop\ImageAnalysis\ReinforcementLearning\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork\ReinforcementNeuralNetwork.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:03.18
+Time Elapsed 00:00:01.19
