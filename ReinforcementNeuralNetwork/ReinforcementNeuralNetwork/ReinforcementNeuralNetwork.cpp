@@ -6,7 +6,7 @@
 #include<stdio.h> //printf
 #include<string>  //string
 #include<string.h>    //strlen
-
+#include<cmath> //math lib
 
 #include "NetMaker.cpp"
 #include "NetLoader.cpp"
@@ -17,15 +17,16 @@ using namespace std;
 int main()
 {
 	
-	bool create_net = false;
+	bool create_net = true;
+	bool train_net = true;
 
 	const char *address = "127.0.0.1";
 	int port = 12345;
 	bool debug_mode = false;
 	int epoch_save = 100;
-	int layer_size = 6;
-	float learning_rate = 0.0001f;
-	unsigned int layer_details[] = { 1,32,32,32,32, 2 };
+	int layer_size = 4;
+	float learning_rate = 0.001f; //0.0001f works with sig out
+	unsigned int layer_details[] = { 1,32,32, 2 };
 	const char *netname = "seeker.net";
 	/*const char *dataname = "xor.data";*/
 
@@ -33,7 +34,8 @@ int main()
 	NetLoader *loader;
 	EasyClientSocket *client;
 
-	int stateSize = 3;
+	//ACTION AND STATE SIZE ARE IMPORTANT!!
+	int stateSize = 1;
 	int actionSize = 2;
 
 	if (create_net == true) {
@@ -44,10 +46,11 @@ int main()
 	loader = new NetLoader(netname, epoch_save, learning_rate);
 	client = new EasyClientSocket(port, address, debug_mode);
 	client->OpenConnection(); //open connection
-
+	
 	//--------Connection conversation start--------
 	while (true) {
 		try {
+
 			//1. Get current state, make prediction and send action 
 			float *rcvStateArray = client->ReceiveFloatArray(stateSize);
 			fann_type *input = new fann_type[stateSize];
@@ -81,8 +84,13 @@ int main()
 				expectedOutput[i] = rcvActionArray[i];
 			}
 
-			if(create_net == true)
+			if (train_net == true) {
+				
 				loader->fit(input2, expectedOutput);
+				loader->mean_squared_error();
+				//float mse = pow((input2[0] - expectedOutput[0]), 2.0f);
+				//printf("%f %f %f\n", input2[0], expectedOutput[0], mse);
+			}
 
 			delete[] rcvActionArray;
 			delete[] expectedOutput;

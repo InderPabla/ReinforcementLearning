@@ -77,6 +77,11 @@ class NetLoader {
 			}
 		}
 
+		void mean_squared_error() {
+			float f = fann_get_MSE(ann);
+			printf("mse %f \n",f);
+		}
+
 		fann_type* predict(fann_type input[]) {
 			fann_type *calc_out = fann_run(ann, input);
 			return calc_out;

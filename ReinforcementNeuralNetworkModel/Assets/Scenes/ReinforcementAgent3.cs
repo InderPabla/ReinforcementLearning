@@ -30,7 +30,7 @@ public class ReinforcementAgent3 : MonoBehaviour
     private float reward = 0f;
 
     private int actionSize = 2;
-    private int stateSize = 1;
+    private int stateSize = 1; 
 
     private int actionType = -1;
     private int workType = -1;
@@ -106,11 +106,13 @@ public class ReinforcementAgent3 : MonoBehaviour
 
     private void GetState()
     {
-        float deg = test.transform.eulerAngles.z;
+        float bDeg = 0f;
+
+        float deg = test.transform.eulerAngles.z-bDeg;
         if (deg >= 180) {
             deg = deg - 360f;
         }
-        states[0] = test.transform.eulerAngles.z * Mathf.Deg2Rad;
+        states[0] = deg * Mathf.Deg2Rad;
 
     }
 
@@ -182,8 +184,9 @@ public class ReinforcementAgent3 : MonoBehaviour
                 }
                 else
                 {
-                    float largestQValue = float.MinValue;
-                    for (int i = 0; i < actionSize; i++)
+                    float largestQValue = qval[ACTION_1];
+                    someAction = ACTION_1;
+                    for (int i = ACTION_2; i < actionSize; i++)
                     {
                         if (qval[i] >= largestQValue)
                         {
@@ -205,9 +208,11 @@ public class ReinforcementAgent3 : MonoBehaviour
                 reward = 0f;
                 float deg = states[0] * (180f / (float)Math.PI);
                 deg = Math.Abs(deg);
-                reward = 1f - (deg / 180f);
+                reward = (180f - deg)/180f;
+
+
                 reward = reward * reward;
-                reward = reward / 1.9f;
+                reward = reward / 2f; 
                 //----------------- 
 
 
@@ -220,8 +225,8 @@ public class ReinforcementAgent3 : MonoBehaviour
                 //-----------------  
 
                 //6. Calculate backpropagation error 
-                float largestNewQValue = 0f;
-                for (int i = 0; i < actionSize; i++)
+                float largestNewQValue = newQ[ACTION_1];
+                for (int i = ACTION_2; i < actionSize; i++)
                 {
                     if (newQ[i] >= largestNewQValue)
                     {
@@ -229,13 +234,15 @@ public class ReinforcementAgent3 : MonoBehaviour
                     }
                 }
 
-                float update = reward + (largestNewQValue * 0.9f);
+                float update = reward + (largestNewQValue * 0f);
                 float[] expectedAction = new float[actionSize];
                 for (int i = 0; i < actionSize; i++)
                 {
                     expectedAction[i] = qval[i];
                 }
                 expectedAction[someAction] = update;
+
+
                 SendArray(expectedAction);
                 //critical.Release();
 
