@@ -2,41 +2,69 @@
 using System.Collections;
 
 public class Agent : MonoBehaviour {
-    Rigidbody2D r;
-    Vector2 v = new Vector2();
-	void Start () {
-        r = GetComponent<Rigidbody2D>();
+    public Rigidbody2D r1;
+    public Rigidbody2D r2;
 
-        Time.timeScale = 0f;
-       
-        r.velocity = new Vector2(6, 7);
-        one();
-        Invoke("one",2f);
+    int trigger = 0;
+    Vector2 velo1;
+
+
+	void Start () {
+        //r = GetComponent<Rigidbody2D>();
+
+        r1.velocity = new Vector2(6, 7);
+        r2.velocity = new Vector2(-6, 7);
+        Invoke("one", 1f);
     }
 
     void one() {
-        v = r.velocity;
-        r.isKinematic = true;
-        two();
-        Invoke("two", 0f);
+        trigger = 1;
+       
     }
-
-    void two() {
-        Debug.Log("dfadf");
-        r.isKinematic = false;
-        r.velocity = new Vector2(-5,5);
-        r.WakeUp();
-        Time.timeScale = 1f;
-        Invoke("three", 2f);
-    }
-
-    void three() {
-        v = r.velocity;
-        r.isKinematic = true;
-    }
-
 
     void FixedUpdate () {
-        Debug.Log("adfadfadfdafadfadf");
+        if (trigger == 25)
+            trigger = -1;
+
+        if (trigger > 1)
+        {
+            Debug.Log(trigger + " 1 " + r1.velocity);
+            trigger++;
+
+        }
+
+        if (trigger == 1)
+        {
+            Debug.Log(trigger+ " Before1:  " + r1.velocity);
+            velo1 = r1.velocity;
+            r1.isKinematic = true;
+            Debug.Log(trigger + " After1:  " + r1.velocity);
+            trigger++;
+
+            
+        }
+
+
+        if (trigger < -1)
+        {
+            Debug.Log(trigger + " 1 " + r1.velocity);
+            trigger--;
+
+        }
+
+        if (trigger == -1) {
+            
+            Debug.Log(trigger+ " Before1:  " + r1.velocity);
+            
+            r1.isKinematic = false;
+            r1.WakeUp();
+            r1.velocity = velo1;
+            Debug.Log(trigger + " After1:  " + r1.velocity);
+            trigger--;
+        }
+
+        
+
+        
     }
 }

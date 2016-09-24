@@ -47,8 +47,8 @@
   <ItemGroup>
      <Compile Include="Assets\Scenes\Agent.cs" />
      <Compile Include="Assets\Scenes\ReinforcementAgent.cs" />
-     <Compile Include="Assets\Scenes\ReinforcementAgent2.cs" />
      <Compile Include="Assets\Scenes\ReinforcementAgent3.cs" />
+     <Compile Include="Assets\Scenes\ReinforcementAgentPhysics.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>

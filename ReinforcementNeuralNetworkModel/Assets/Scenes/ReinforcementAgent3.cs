@@ -106,7 +106,7 @@ public class ReinforcementAgent3 : MonoBehaviour
 
     private void GetState()
     {
-        float bDeg = 0f;
+        float bDeg = 180f;
 
         float deg = test.transform.eulerAngles.z-bDeg;
         if (deg >= 180) {
@@ -211,8 +211,8 @@ public class ReinforcementAgent3 : MonoBehaviour
                 reward = (180f - deg)/180f;
 
 
-                reward = reward * reward;
-                reward = reward / 2f; 
+                reward = reward * reward * reward * reward;
+                //reward = reward / 2f; 
                 //----------------- 
 
 
