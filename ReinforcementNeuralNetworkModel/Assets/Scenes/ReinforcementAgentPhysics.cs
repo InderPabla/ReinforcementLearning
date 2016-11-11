@@ -8,6 +8,8 @@ using UnityEditor;
 using System.IO;
 using System.Collections;
 
+
+//CONVERT THIS TO CLIENT NOT SERVER!
 // This class with handel commmunications with C++ FANN, collect data, and control agent GameObject
 public class ReinforcementAgentPhysics : MonoBehaviour
 {
@@ -58,7 +60,7 @@ public class ReinforcementAgentPhysics : MonoBehaviour
     private GameObject test = null;
     private Rigidbody2D rBodies; // Size set by user
     private float angle;
-
+    
     // Use this for initialization
     private void Start()
     {
@@ -187,13 +189,13 @@ public class ReinforcementAgentPhysics : MonoBehaviour
 
                 //critical.WaitOne();
 
-                SendArray(states); //send state to netowrk
+                SendArray(states); //send state to network
 
 
                 float[] qval = ReceiveFloatArray(actionSize); //receive prediction
                 //-----------------  
 
-
+                
                 //2. Pick with epsilion greedy method
                 int someAction = ACTION_NULL;
                 float chance = (float)randomGenerator.NextDouble();
