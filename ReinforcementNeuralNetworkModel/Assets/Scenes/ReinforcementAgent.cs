@@ -7,7 +7,10 @@ using System;
 using UnityEditor;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 
+
+//CONVERT THIS TO CLIENT NOT SERVER!
 // This class with handel commmunications with C++ FANN, collect data, and control agent GameObject
 public class ReinforcementAgent : MonoBehaviour
 {
@@ -24,320 +27,59 @@ public class ReinforcementAgent : MonoBehaviour
     private string addressName = "localhost";
     private int port = 12345;
 
-    private float[] actions;
-    private float[] states;
-
-    private float reward = 0f;
-
-    private int actionSize = 2;
-    private int stateSize = 3;
-
-    private int actionType = -1;
-    private int workType = -1;
-
-    private bool quit = false;
-
-    private const int WORK_APPLY = 0;
-    private const int WORK_RESET = 2;
-    private const int WORK_GET = 1;
-    private const int WORK_NULL = -1;
-    private const int WORK_WAIT_UNPAUSE = 3;
-
-    private const int ACTION_NULL = -1;
-    private const int ACTION_1 = 0;
-    private const int ACTION_2 = 1;
-
-    //private float epslion = 1f;
-    //private float epslionDecay = 0f;//0.00001f;
-
-    //private Semaphore critical;
 
     // Public values which can be set from the Unity inspector 
     public bool connect = false;
     public GameObject testPrefab;
-    public float timeScale = 1f;
+    public Transform location;
     public float epslion = 1f;
+    public float minEpslionAmount = 0.1f;
     public float epslionDecay = 0f;
+    public int actionSize = 2;
+    public int stateSize = 2;
+    public float gamma = 0f;
 
+    private bool quit = false;
     private GameObject test = null;
-    private Rigidbody2D[] rBodies /*= new Rigidbody2D[2]*/; // Size set by user
-    private Vector2[] rVelocity;
-    private float[] rAngularVelocity;
+    private Rigidbody2D rBodies; // Size set by user
+    private float[] qVal;
+    private float[] state;
+    private int agentAction = -1;
+    private int agentState = 0;
+    private float reward = 0f;
+    private float update = 0f;
+
+    List<ReplayData> replayDataList = new List<ReplayData>();
 
     // Use this for initialization
     private void Start()
     {
         Application.runInBackground = true;
-
         Reset();
-
-        Time.timeScale = timeScale;
-
-        //critical = new Semaphore(1,1);
-        actions = new float[actionSize];
-        states = new float[stateSize];
-
-        if (connect == true)
-        {
-            OpenConnection();
-        }
     }
 
     // Update is called once per frame
-    private void Update()
+    private void FixedUpdate()
     {
+        if (connect == false)
+        {
+            //Get local IP address and start listening to TCP socket on port 12345
+            address = Dns.GetHostEntry(addressName).AddressList[0];
+            serverSocket = new TcpListener(address, port);
+            serverSocket.Start();
+
+            acceptSocket = serverSocket.AcceptTcpClient();  // Accept data stream from TCP server socket
+            stream = acceptSocket.GetStream(); // Client connected to this socket
+            Debug.Log("Client Has Connected.");
+
+            connect = true;
+        }
+
         if (quit == false)
-        {
-            //critical.WaitOne();
-            if (workType == WORK_APPLY)
-            {
-                Unpause();
-                workType = WORK_WAIT_UNPAUSE;
-            }
-            else if (workType == WORK_GET)
-            {
-                GetState();
-                Pause();
-                workType = WORK_NULL;
-            }
-            else if (workType == WORK_RESET)
-            {
-                Reset();
-                workType = WORK_NULL;
-            }
-            else if (workType == WORK_WAIT_UNPAUSE)
-            {
-                ApplyAction();
-
-                actionType = ACTION_NULL;
-                workType = WORK_GET;
-            }
-            //critical.Release();
-        }
-        else
-        {
-            Application.Quit();
-        }
-    }
-
-    private void GetState()
-    {
-        states[0] = rBodies[1].velocity.x;
-        states[1] = rBodies[0].angularVelocity; //pole angualr 
-        states[2] = rBodies[0].transform.eulerAngles.z * Mathf.Deg2Rad;
-    }
-
-    public void Reset()
-    {
-        /*rBodies[0].velocity = Vector2.zero;
-        rBodies[0].angularVelocity = 0f;
-
-        rBodies[1].velocity = Vector2.zero;
-        rBodies[1].angularVelocity = 0f;
-
-        rBodies[1].transform.position = new Vector3(0,0,0f);
-        rBodies[0].transform.eulerAngles = new Vector3(0, 0, 0f);*/
-
-        Destroy(test);
-        test = Instantiate(testPrefab) as GameObject;
-        rBodies = test.transform.GetComponentsInChildren<Rigidbody2D>();
-        rVelocity = new Vector2[rBodies.Length];
-        rAngularVelocity = new float[rBodies.Length];
-        Pause();
-
-
-    }
-
-    public void Pause()
-    {
-        //rBodies[0].Sleep();
-        //rBodies[1].Sleep();
-
-        for (int i = 0; i < rBodies.Length; i++)
-        {
-            rVelocity[i] = rBodies[i].velocity;
-            rAngularVelocity[i] = rBodies[i].angularVelocity;
-            if(i == 1)
-                Debug.Log(rVelocity[i]);
-            rBodies[i].isKinematic = true;
-            //rBodies[i].Sleep();
-        }
-
-    }
-
-    public void Unpause()
-    {
-        for (int i = 0; i < rBodies.Length; i++)
-        {
-            rBodies[i].isKinematic = false;
-            
-            //rBodies[i].AddForce(rBodies[i].mass * rVelocity[i] / Time.deltaTime);
-            //rBodies[i].AddTorque(rBodies[i].mass * rAngularVelocity[i] / Time.deltaTime);
-            /*if(i == 1)
-                Debug.Log("Before Unpause "+ rAngularVelocity[i]);*/
-            //rBodies[i].velocity = rVelocity[i];
-            //rBodies[i].angularVelocity = rAngularVelocity[i];
-            rBodies[i].WakeUp();
-        }
-        //rBodies[0].WakeUp();
-        //rBodies[1].WakeUp();
-    }
-
-    private void ApplyAction()
-    {
-        rBodies[0].velocity = rVelocity[0];
-        rBodies[0].angularVelocity = rAngularVelocity[0];
-
-        rBodies[1].angularVelocity = rAngularVelocity[1];
-
-        if (actionType == ACTION_1)
-        {
-            
-
-            //rBodies[1].AddForce(new Vector2(rBodies[1].mass * 50 / Time.deltaTime, 0f));
-            //Debug.Log("After Upause " + rBodies[1].velocity);
-            rBodies[1].velocity += (new Vector2(50 * Time.deltaTime, 0f) + rVelocity[1]);
-        }
-        else if (actionType == ACTION_2)
-        {
-            //rBodies[1].AddForce(new Vector2(rBodies[1].mass * -50 / Time.deltaTime, 0f));
-            rBodies[1].velocity += (new Vector2(-50 * Time.deltaTime, 0f) + rVelocity[1]);
-        }
-    }
-
-
-
-    //Worker thread which will deal with connected to C++ FANN
-    private void Worker()
-    {
-
-        //Get local IP address and start listening to TCP socket on port 12345
-        address = Dns.GetHostEntry(addressName).AddressList[0];
-        serverSocket = new TcpListener(address, port);
-        serverSocket.Start();
-
-        acceptSocket = serverSocket.AcceptTcpClient();  // Accept data stream from TCP server socket
-        stream = acceptSocket.GetStream(); // Client connected to this socket
-        Debug.Log("Client Has Connected.");
-        System.Random randomGenerator = new System.Random();
-
-        while (quit == false)
         {
             try
             {
-                //Might need to add semaphores! There will be a context swtich from here to update!
-                bool reset = false;
-                //1. Make prediction on current state 
-                Work(WORK_GET, ACTION_NULL); //get current state 
-
-                //critical.WaitOne();
-
-                SendArray(states); //send state to netowrk
-
-
-                float[] qval = ReceiveFloatArray(actionSize); //receive prediction
-                //-----------------  
-
-
-                //2. Pick with epsilion greedy method
-                int someAction = ACTION_NULL;
-                float chance = (float)randomGenerator.NextDouble();
-                if (chance < epslion)
-                {
-                    epslion -= epslionDecay;
-                    someAction = randomGenerator.Next(actionSize);
-                }
-                else
-                {
-                    float largestQValue = float.MinValue;
-                    for (int i = 0; i < actionSize; i++)
-                    {
-                        if (qval[i] >= largestQValue)
-                        {
-                            largestQValue = qval[i];
-                            someAction = i;
-                        }
-                    }
-                    Debug.Log("MAX Q " + epslion);
-                }
-                //critical.Release();
-                //----------------- 
-
-
-                //3. Apply action and get state
-                Work(WORK_APPLY, someAction);
-
-
-                //4. Get reward for current state
-                //critical.WaitOne();
-                float failDegree = 45f;
-                float pole1AngleDegree = (states[2] * 180f) / (float)Math.PI;
-                /*if (pole1AngleDegree >= 90f && pole1AngleDegree <= 270f)
-                    reward = -10f;
-                else if (pole1AngleDegree >= failDegree && pole1AngleDegree <= 90f)
-                    reward = -1f;
-                else if (pole1AngleDegree <= (360f - failDegree) && pole1AngleDegree >= 270f)
-                    reward = -1f;
-                else
-                    reward = 10f;*/
-
-                if (pole1AngleDegree >= (failDegree / 2) && pole1AngleDegree <= (360 - (failDegree / 2f)))
-                    reward = -100f;
-                else if (pole1AngleDegree <= failDegree)
-                {
-                    reward = ((failDegree - pole1AngleDegree) / failDegree) * 100f;
-                    reward = reward * reward;
-                }
-                else if (pole1AngleDegree >= (360f - failDegree))
-                {
-                    reward = ((failDegree - (360 - pole1AngleDegree)) / failDegree) * 100f;
-                    reward = reward * reward;
-                }
-
-
-
-                if (!((pole1AngleDegree <= failDegree && pole1AngleDegree >= 0) || (pole1AngleDegree <= 360 && pole1AngleDegree >= (360 - failDegree))))
-                {
-                    reset = true;
-                }
-                //critical.Release();
-                //----------------- 
-
-
-                //5. Make predcition on sate after action
-                Work(WORK_GET, ACTION_NULL); //get state after acction 
-
-                //critical.WaitOne();
-                SendArray(states); //send state to netowrk
-                float[] newQ = ReceiveFloatArray(actionSize); //receive new prediction
-                //-----------------  
-
-                //6. Calculate backpropagation error 
-                float largestNewQValue = 0f;
-                for (int i = 0; i < actionSize; i++)
-                {
-                    if (newQ[i] >= largestNewQValue)
-                    {
-                        largestNewQValue = newQ[i];
-                    }
-                }
-
-                float update = reward + (largestNewQValue * 0.9f);
-                float[] expectedAction = new float[actionSize];
-                for (int i = 0; i < actionSize; i++)
-                {
-                    expectedAction[i] = qval[i];
-                }
-                expectedAction[someAction] = update;
-                SendArray(expectedAction);
-                //critical.Release();
-
-                if (reset == true)
-                {
-                    Work(WORK_RESET, ACTION_NULL);
-                }
-                //-----------------  
-
+                StateUpdate();
             }
             catch (Exception err)
             {
@@ -346,20 +88,175 @@ public class ReinforcementAgent : MonoBehaviour
                 quit = true;
             }
         }
-
-        Debug.Log("Client Has Diconnected.");
+        else
+        {
+            Application.Quit();
+        }
     }
 
-    private void Work(int workType, int actionType)
+    public void Reset()
     {
-        this.actionType = actionType;
-        this.workType = workType;
-        while (this.workType != WORK_NULL) { }; // wait
+        Destroy(test);
+        test = Instantiate(testPrefab) as GameObject;
+        rBodies = test.transform.GetComponent<Rigidbody2D>();
+    }
+
+
+    public void StateUpdate()
+    {
+        STATE_ZERO:
+        rBodies.velocity = rBodies.transform.up * 5f;
+        ResetTest();
+        if (agentState == 0)
+        {
+            qVal = GetStatePrediction(); //get initial prediction
+            agentAction = GetAction();
+            ApplyAction();
+            agentState = 1;
+        }
+        else if (agentState == 1) //after new move
+        {
+
+            float[] oldState = state;
+            float[] newQVal = GetStatePrediction(); //get initial prediction
+
+            reward = GetReward();
+            float maxQValue = GetMaxValue(newQVal);
+
+            float[] expectedQVal = new float[actionSize];
+            for (int i = 0; i < actionSize; i++)
+                expectedQVal[i] = qVal[i];
+
+            update = reward + (gamma * maxQValue);
+            expectedQVal[agentAction] = update;
+
+            SendArray(expectedQVal);
+            agentState = 0;
+            /*replayDataList.Add(new ReplayData(oldState, agentAction, reward, state));
+            if (replayDataList.Count % 100 == 0)
+                Debug.Log(replayDataList.Count);*/
+            goto STATE_ZERO;
+        }
+
+    }
+
+    public void ResetTest()
+    {
+        if (Mathf.Abs(rBodies.transform.position.x) > 33f || Mathf.Abs(rBodies.transform.position.y) > 18f)
+        {
+            rBodies.transform.position = Vector3.zero;
+            rBodies.transform.eulerAngles = Vector3.zero;
+            rBodies.angularVelocity = 0f;
+        }
+    }
+
+    public float GetReward()
+    {
+        /*float distanceSig = (1f - Sigmoid(state[0]));
+        return ((distanceSig * distanceSig) / 2f);*/
+
+        float distanceSig = 1f-(float)Math.Tanh(Mathf.Pow((state[0]*10f),2));
+        return distanceSig;
+    }
+
+
+    public float GetMaxValue(float[] qValue)
+    {
+        float value = qValue[0];
+        for (int i = 1; i < qValue.Length; i++)
+        {
+            if (value >= qValue[i])
+            {
+                value = qValue[i];
+            }
+        }
+
+        return value;
+    }
+
+    public void ApplyAction()
+    {
+        if (agentAction == 0)
+        {
+            rBodies.angularVelocity = 300f;
+        }
+        else if (agentAction == 1)
+        {
+            rBodies.angularVelocity = -300f;
+        }
+    }
+
+    public float[] GetStatePrediction()
+    {
+        state = GetState();
+        SendArray(state);
+        return ReceiveFloatArray();
+    }
+
+    public int GetAction()
+    {
+        int action = -1;
+        float chance = UnityEngine.Random.Range(0f, 1f);
+        if (/*minEpslionAmount> epslion &&*/ chance < epslion)
+        {
+            epslion -= epslionDecay;
+
+            return UnityEngine.Random.Range(0, actionSize);
+        }
+
+
+        float largestQValue = qVal[0];
+        action = 0;
+        for (int i = 1; i < actionSize; i++)
+        {
+            if (qVal[i] > largestQValue)
+            {
+                largestQValue = qVal[i];
+                action = i;
+            }
+        }
+
+        return action;
+    }
+
+
+
+    public float[] GetState()
+    {
+        float[] state = new float[stateSize];
+        state[0] = Vector3.Distance(rBodies.transform.position, location.position) / 10f;
+
+        Vector2 dir = rBodies.transform.up;
+        Vector2 deltaVector =  rBodies.transform.position- location.position;
+        deltaVector = deltaVector.normalized;
+
+        float rad = Mathf.Atan2(deltaVector.y, deltaVector.x);
+        rad *= Mathf.Rad2Deg;
+        rad = 90f - rad;
+        if (rad < 0f)
+        {
+            rad += 360f;
+        }
+        rad = 360 - rad;
+        rad -= rBodies.transform.eulerAngles.z;
+        if (rad < 0)
+            rad = 360 + rad;
+        if (rad >= 180f)
+        {
+            rad = 360 - rad;
+            rad *= -1f;
+        }
+        rad *= Mathf.Deg2Rad;
+
+        state[1] = rad;
+
+        return state;
     }
 
     // Recieve float array 
-    private float[] ReceiveFloatArray(int count)
+    private float[] ReceiveFloatArray()
     {
+        int count = actionSize;
         int sizeOfFloat = 4;
         int byteCount = sizeOfFloat * count;
         byte[] bytes = new byte[byteCount];
@@ -404,36 +301,9 @@ public class ReinforcementAgent : MonoBehaviour
         stream.Write(convertedData, 0, convertedData.Length);
     }
 
-    // Test sending an array with 5 float values 
-    private void TestSendArray()
+    public float Sigmoid(float x)
     {
-        float[] sendArray = { 1.24f, -0.425f, 67.245f, -101.45f, 2.7778f };
-        SendArray(sendArray);
-    }
-
-    // Test receiveing an array with 5 float values
-    private void TestReceiveArray()
-    {
-        float[] rcvArray = ReceiveFloatArray(5);
-        Debug.Log(rcvArray[0] + " " + rcvArray[1] + " " + rcvArray[2] + " " + rcvArray[3] + " " + rcvArray[4]);
-    }
-
-    private void TestActionAndWork()
-    {
-        // intial getting of state
-        Work(WORK_GET, ACTION_NULL); // Work till work type is null
-
-        Debug.Log("Pre Action: " + states[0] + " " + states[1] + " " + states[2]);
-
-        //applying action 1
-        Work(WORK_APPLY, ACTION_1); // Work till work type is null
-
-        Debug.Log("Post Action 1: " + states[0] + " " + states[1] + " " + states[2]);
-
-        //applying action 2
-        Work(WORK_APPLY, ACTION_2); // Work till work type is null
-
-        Debug.Log("Post Action 2: " + states[0] + " " + states[1] + " " + states[2]);
+        return (float)(2 / (1 + Math.Exp(-2 * x)) - 1);
     }
 
     // If application quits makes sure all sockets and streams are closed
@@ -494,13 +364,6 @@ public class ReinforcementAgent : MonoBehaviour
         {
 
         }
-    }
-
-    private void OpenConnection()
-    {
-        thread = new Thread(Worker); // Thread object to run Woker method
-        thread.IsBackground = true; // Not a dameon thread, must run in foreground
-        thread.Start(); // Start thread
     }
 
     // Forced security close of this thread

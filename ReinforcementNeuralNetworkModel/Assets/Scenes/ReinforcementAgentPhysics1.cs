@@ -109,11 +109,12 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
         {
             try
             {
+                LoopBack:
                 if (theState == 0)
                 {
                     GetState();
+                    PrintState(1);
                     SendArray(states); //send state to network
-
 
                     qval = ReceiveFloatArray(actionSize); //receive prediction
 
@@ -139,6 +140,8 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
                         }
                         Debug.Log("MAX Q " + epslion);
                     }
+
+                    ApplyAction();
 
                     theState++;
                 }
@@ -182,6 +185,10 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
 
                     actionType = ACTION_NULL;
                     theState = 0;
+
+                    GetState();
+                    PrintState(0);
+                    goto LoopBack;
                 }
             }
             catch (Exception err)
@@ -191,13 +198,20 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
                 quit = true;
             }
 
-            ApplyAction();
+            
         }
         else
         {
             Application.Quit();
         }
     }
+
+    public void PrintState(int num)
+    {
+        Debug.Log(num+" "+states[0]);
+    }
+
+
 
     public void Reset()
     {
