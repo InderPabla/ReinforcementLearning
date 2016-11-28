@@ -24,10 +24,10 @@ class NetMaker {
 			for (int i = 0; i < size; i++) {
 				printf("%i ", (layerDetails[i]));
 			}
-
+			
 			struct fann *ann = fann_create_standard_array(size, layerDetails);
 			fann_set_activation_function_hidden(ann, FANN_SIGMOID_SYMMETRIC);
-			fann_set_activation_function_output(ann, FANN_SIGMOID);
+			fann_set_activation_function_output(ann, FANN_LINEAR);
 
 			fann_save(ann,filename);
 			fann_destroy(ann);

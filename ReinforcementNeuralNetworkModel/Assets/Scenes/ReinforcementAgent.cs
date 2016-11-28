@@ -75,7 +75,7 @@ public class ReinforcementAgent : MonoBehaviour
             connect = true;
         }
 
-        if (quit == false)
+        if (quit == false && connect == true)
         {
             try
             {
@@ -90,7 +90,7 @@ public class ReinforcementAgent : MonoBehaviour
         }
         else
         {
-            Application.Quit();
+            Application.Quit(); //quit if quit is false!
         }
     }
 
@@ -132,9 +132,15 @@ public class ReinforcementAgent : MonoBehaviour
 
             SendArray(expectedQVal);
             agentState = 0;
-            /*replayDataList.Add(new ReplayData(oldState, agentAction, reward, state));
-            if (replayDataList.Count % 100 == 0)
-                Debug.Log(replayDataList.Count);*/
+
+            int random = UnityEngine.Random.Range(0, 100);
+            if (random == 0)
+            {
+                replayDataList.Add(new ReplayData(oldState, agentAction, reward, state));
+                if (replayDataList.Count % 10 == 0)
+                    Debug.Log(replayDataList.Count);
+            }
+
             goto STATE_ZERO;
         }
 
@@ -147,6 +153,8 @@ public class ReinforcementAgent : MonoBehaviour
             rBodies.transform.position = Vector3.zero;
             rBodies.transform.eulerAngles = Vector3.zero;
             rBodies.angularVelocity = 0f;
+
+            location.position = new Vector3(UnityEngine.Random.Range(-27f,27f), UnityEngine.Random.Range(-8f, 8f),0f);
         }
     }
 
@@ -227,7 +235,7 @@ public class ReinforcementAgent : MonoBehaviour
         state[0] = Vector3.Distance(rBodies.transform.position, location.position) / 10f;
 
         Vector2 dir = rBodies.transform.up;
-        Vector2 deltaVector =  rBodies.transform.position- location.position;
+        Vector2 deltaVector =  location.position - rBodies.transform.position;
         deltaVector = deltaVector.normalized;
 
         float rad = Mathf.Atan2(deltaVector.y, deltaVector.x);

@@ -16,18 +16,22 @@ using namespace std;
 
 int main()
 {
-	
-	bool create_net = true;
-	bool train_net = true;
+	bool create_net = false;
+	bool train_net = false;
+	bool play = true;
 
 	const char *address = "127.0.0.1";
 	int port = 12345;
 	bool debug_mode = false;
 	int epoch_save = 100;
 	int layer_size = 4;
-	float learning_rate = 0.001f; //0.0001f works with sig out
-	unsigned int layer_details[] = { 1,32,32, 2 };
-	const char *netname = "seeker.net";
+	float learning_rate = 0.001f; //0.001f and 0.0001f works with sig out
+
+	int stateSize = 6;
+	int actionSize = 3;
+
+	unsigned int layer_details[] = { stateSize, 40,40, actionSize };
+	const char *netname = "cardriver1.net";
 	/*const char *dataname = "xor.data";*/
 
 	NetMaker *maker;
@@ -35,8 +39,7 @@ int main()
 	EasyClientSocket *client;
 
 	//ACTION AND STATE SIZE ARE IMPORTANT!!
-	int stateSize = 1;
-	int actionSize = 2;
+	
 
 	if (create_net == true) {
 		maker = new NetMaker(layer_details, layer_size, netname);
@@ -46,11 +49,12 @@ int main()
 	loader = new NetLoader(netname, epoch_save, learning_rate);
 	client = new EasyClientSocket(port, address, debug_mode);
 	client->OpenConnection(); //open connection
-	
-	//--------Connection conversation start--------
-	while (true) {
+
+							  //--------Connection conversation start--------
+	while (play) {
 		try {
 
+			//reinforcement code --- 
 			//1. Get current state, make prediction and send action 
 			float *rcvStateArray = client->ReceiveFloatArray(stateSize);
 			fann_type *input = new fann_type[stateSize];
@@ -83,9 +87,10 @@ int main()
 			for (int i = 0; i < actionSize; i++) {
 				expectedOutput[i] = rcvActionArray[i];
 			}
+			//--reinforcement end here
 
 			if (train_net == true) {
-				
+
 				loader->fit(input2, expectedOutput);
 				loader->mean_squared_error();
 				//float mse = pow((input2[0] - expectedOutput[0]), 2.0f);
@@ -102,7 +107,7 @@ int main()
 			delete[] input2;
 		}
 		catch (int e) {
-			printf("EXCEPTION %i",e);
+			printf("EXCEPTION %i", e);
 			break;
 		}
 	}
@@ -111,8 +116,9 @@ int main()
 
 	client->CloseConnection(); //close connection
 
-	//free heap
+							   //free heap
 	delete client;
+
 
 	return 0;
 }

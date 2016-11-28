@@ -211,8 +211,6 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
         Debug.Log(num+" "+states[0]);
     }
 
-
-
     public void Reset()
     {
         Destroy(test);
@@ -221,7 +219,6 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
 
 
     }
-
 
     private void ApplyAction()
     {
@@ -234,8 +231,6 @@ public class ReinforcementAgentPhysics1 : MonoBehaviour
             rBodies.angularVelocity = -250f;
         }
     }
-
-
 
     // Recieve float array 
     private float[] ReceiveFloatArray(int count)
